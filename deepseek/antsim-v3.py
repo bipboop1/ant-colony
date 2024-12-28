@@ -217,7 +217,7 @@ def draw_counters(screen, ants, total_food_collected, total_ants_spawned, time_e
         screen.blit(text, (10 + padding, y_offset))
         y_offset += 30
 
-def draw_buttons(screen, font, input_text, paused, show_pheromone_slider, pheromone_influence):
+def draw_buttons(screen, font, input_text, paused, pheromone_influence):
     # Button dimensions and positions
     button_width = 150
     button_height = 40
@@ -265,23 +265,19 @@ def draw_buttons(screen, font, input_text, paused, show_pheromone_slider, pherom
     input_text_surface = font.render(input_text, True, BUTTON_TEXT_COLOR)
     screen.blit(input_text_surface, (x_offset + 10, y_offset + 10))
 
-    # Pheromone influence button
+    # Increase pheromone influence button
     y_offset += button_height + 10
-    pheromone_button = pygame.Rect(x_offset, y_offset, button_width, button_height)
-    pygame.draw.rect(screen, BUTTON_BG_COLOR, pheromone_button)
-    pheromone_text = font.render("Pheromone", True, BUTTON_TEXT_COLOR)
-    screen.blit(pheromone_text, (x_offset + 10, y_offset + 10))
+    increase_pheromone_button = pygame.Rect(x_offset, y_offset, button_width, button_height)
+    pygame.draw.rect(screen, BUTTON_BG_COLOR, increase_pheromone_button)
+    increase_pheromone_text = font.render("Pheromone+", True, BUTTON_TEXT_COLOR)
+    screen.blit(increase_pheromone_text, (x_offset + 10, y_offset + 10))
 
-    # Pheromone influence slider
-    if show_pheromone_slider:
-        y_offset += button_height + 10
-        slider_width = button_width
-        slider_height = 10
-        slider_x = x_offset
-        slider_y = y_offset
-        pygame.draw.rect(screen, BUTTON_BG_COLOR, (slider_x, slider_y, slider_width, slider_height))
-        slider_handle_x = slider_x + int(pheromone_influence * slider_width)
-        pygame.draw.rect(screen, WHITE, (slider_handle_x - 5, slider_y - 5, 10, slider_height + 10))
+    # Decrease pheromone influence button
+    y_offset += button_height + 10
+    decrease_pheromone_button = pygame.Rect(x_offset, y_offset, button_width, button_height)
+    pygame.draw.rect(screen, BUTTON_BG_COLOR, decrease_pheromone_button)
+    decrease_pheromone_text = font.render("Pheromone-", True, BUTTON_TEXT_COLOR)
+    screen.blit(decrease_pheromone_text, (x_offset + 10, y_offset + 10))
 
 def reset_simulation(nest, ants, foods, pheromones, initial_ants, ant_speed):
     nest.food_deposited = 0
@@ -311,7 +307,6 @@ def main():
     time_elapsed = 0  # Counter for time elapsed
     input_text = ""  # Text input for number of ants
     input_active = False  # Whether the input box is active
-    show_pheromone_slider = False  # Whether to show the pheromone influence slider
     pheromone_influence = 0.8  # Default pheromone influence strength
 
     while running:
@@ -365,14 +360,10 @@ def main():
                         input_active = True
                     elif 320 <= mouse_pos[1] <= 360:  # Input box
                         input_active = True
-                    elif 380 <= mouse_pos[1] <= 420:  # Pheromone influence button
-                        show_pheromone_slider = not show_pheromone_slider
-                    elif show_pheromone_slider and 440 <= mouse_pos[1] <= 450:  # Pheromone influence slider
-                        # Update pheromone influence based on mouse position
-                        slider_x = WIDTH - 170
-                        slider_width = 150
-                        mouse_x = mouse_pos[0]
-                        pheromone_influence = max(0, min(1, (mouse_x - slider_x) / slider_width))
+                    elif 380 <= mouse_pos[1] <= 420:  # Increase pheromone influence button
+                        pheromone_influence = min(1.0, pheromone_influence + 0.1)  # Increase by 0.1
+                    elif 440 <= mouse_pos[1] <= 480:  # Decrease pheromone influence button
+                        pheromone_influence = max(0.0, pheromone_influence - 0.1)  # Decrease by 0.1
 
         if not paused:
             # Update pheromones
@@ -417,7 +408,7 @@ def main():
 
         # Draw buttons
         font = pygame.font.SysFont("Consolas", 24)
-        draw_buttons(screen, font, input_text, paused, show_pheromone_slider, pheromone_influence)
+        draw_buttons(screen, font, input_text, paused, pheromone_influence)
 
         pygame.display.flip()
 
