@@ -15,6 +15,8 @@ YELLOW = (255, 255, 0)
 GRAY = (128, 128, 128)  # New gray color
 COUNTER_BG_COLOR = (0, 0, 0, 128)  # Semi-transparent black background
 COUNTER_BORDER_COLOR = (255, 255, 255)  # White border
+BUTTON_BG_COLOR = (50, 50, 50)  # Dark gray for buttons
+BUTTON_TEXT_COLOR = (255, 255, 255)  # White text for buttons
 
 # Ant settings
 ANT_SIZE = 5
@@ -97,7 +99,7 @@ class Ant:
                 return food
         return None
 
-    def sense_pheromones(self, pheromones):
+    def sense_pheromones(self, pheromones, pheromone_influence):
         if self.has_food:
             return None
 
@@ -120,7 +122,7 @@ class Ant:
             angle_diff = (target_angle - self.angle) % (2 * math.pi)
             if angle_diff > math.pi:
                 angle_diff -= 2 * math.pi
-            self.angle += angle_diff * 0.8  # Strongly follow the pheromone trail
+            self.angle += angle_diff * pheromone_influence  # Adjustable pheromone influence
 
     def check_collision(self, target_x, target_y, target_radius):
         # Check if the ant is touching the target (food or nest)
@@ -176,7 +178,7 @@ class Nest:
     def draw(self, screen):
         pygame.draw.circle(screen, BLUE, (int(self.x), int(self.y)), NEST_SIZE)
 
-def draw_counters(screen, ants, total_food_collected, total_ants_spawned, time_elapsed, ant_speed):
+def draw_counters(screen, ants, total_food_collected, total_ants_spawned, time_elapsed, ant_speed, pheromone_influence):
     font = pygame.font.SysFont("Consolas", 24)  # Cooler font
     y_offset = 10  # Vertical spacing between counters
     padding = 10  # Padding around the text
@@ -189,7 +191,8 @@ def draw_counters(screen, ants, total_food_collected, total_ants_spawned, time_e
         f"Ants Carrying Food: {len([ant for ant in ants if ant.has_food])}",
         f"Total Ants Spawned: {total_ants_spawned}",
         f"Time Elapsed: {time_elapsed // 60}m {time_elapsed % 60}s",
-        f"Ant Speed: {ant_speed:.1f}"
+        f"Ant Speed: {ant_speed:.1f}",
+        f"Pheromone Influence: {pheromone_influence:.2f}"
     ]
 
     # Calculate the maximum width of the texts
@@ -213,6 +216,72 @@ def draw_counters(screen, ants, total_food_collected, total_ants_spawned, time_e
         text = font.render(counter, True, WHITE)
         screen.blit(text, (10 + padding, y_offset))
         y_offset += 30
+
+def draw_buttons(screen, font, input_text, paused, show_pheromone_slider, pheromone_influence):
+    # Button dimensions and positions
+    button_width = 150
+    button_height = 40
+    x_offset = WIDTH - button_width - 20
+    y_offset = 20
+
+    # Reset button
+    reset_button = pygame.Rect(x_offset, y_offset, button_width, button_height)
+    pygame.draw.rect(screen, BUTTON_BG_COLOR, reset_button)
+    reset_text = font.render("Reset (R)", True, BUTTON_TEXT_COLOR)
+    screen.blit(reset_text, (x_offset + 10, y_offset + 10))
+
+    # Play/Pause button
+    y_offset += button_height + 10
+    play_pause_button = pygame.Rect(x_offset, y_offset, button_width, button_height)
+    pygame.draw.rect(screen, BUTTON_BG_COLOR, play_pause_button)
+    play_pause_text = font.render("Pause (Space)" if not paused else "Play (Space)", True, BUTTON_TEXT_COLOR)
+    screen.blit(play_pause_text, (x_offset + 10, y_offset + 10))
+
+    # Increase speed button
+    y_offset += button_height + 10
+    increase_speed_button = pygame.Rect(x_offset, y_offset, button_width, button_height)
+    pygame.draw.rect(screen, BUTTON_BG_COLOR, increase_speed_button)
+    increase_text = font.render("Speed+ (+)", True, BUTTON_TEXT_COLOR)
+    screen.blit(increase_text, (x_offset + 10, y_offset + 10))
+
+    # Decrease speed button
+    y_offset += button_height + 10
+    decrease_speed_button = pygame.Rect(x_offset, y_offset, button_width, button_height)
+    pygame.draw.rect(screen, BUTTON_BG_COLOR, decrease_speed_button)
+    decrease_text = font.render("Speed- (-)", True, BUTTON_TEXT_COLOR)
+    screen.blit(decrease_text, (x_offset + 10, y_offset + 10))
+
+    # Set ants button
+    y_offset += button_height + 10
+    set_ants_button = pygame.Rect(x_offset, y_offset, button_width, button_height)
+    pygame.draw.rect(screen, BUTTON_BG_COLOR, set_ants_button)
+    set_ants_text = font.render("Set Ants", True, BUTTON_TEXT_COLOR)
+    screen.blit(set_ants_text, (x_offset + 10, y_offset + 10))
+
+    # Input box for number of ants
+    y_offset += button_height + 10
+    input_box = pygame.Rect(x_offset, y_offset, button_width, button_height)
+    pygame.draw.rect(screen, BUTTON_BG_COLOR, input_box)
+    input_text_surface = font.render(input_text, True, BUTTON_TEXT_COLOR)
+    screen.blit(input_text_surface, (x_offset + 10, y_offset + 10))
+
+    # Pheromone influence button
+    y_offset += button_height + 10
+    pheromone_button = pygame.Rect(x_offset, y_offset, button_width, button_height)
+    pygame.draw.rect(screen, BUTTON_BG_COLOR, pheromone_button)
+    pheromone_text = font.render("Pheromone", True, BUTTON_TEXT_COLOR)
+    screen.blit(pheromone_text, (x_offset + 10, y_offset + 10))
+
+    # Pheromone influence slider
+    if show_pheromone_slider:
+        y_offset += button_height + 10
+        slider_width = button_width
+        slider_height = 10
+        slider_x = x_offset
+        slider_y = y_offset
+        pygame.draw.rect(screen, BUTTON_BG_COLOR, (slider_x, slider_y, slider_width, slider_height))
+        slider_handle_x = slider_x + int(pheromone_influence * slider_width)
+        pygame.draw.rect(screen, WHITE, (slider_handle_x - 5, slider_y - 5, 10, slider_height + 10))
 
 def reset_simulation(nest, ants, foods, pheromones, initial_ants, ant_speed):
     nest.food_deposited = 0
@@ -238,7 +307,13 @@ def main():
     pheromones = deque()
 
     running = True
+    paused = False  # Whether the simulation is paused
     time_elapsed = 0  # Counter for time elapsed
+    input_text = ""  # Text input for number of ants
+    input_active = False  # Whether the input box is active
+    show_pheromone_slider = False  # Whether to show the pheromone influence slider
+    pheromone_influence = 0.8  # Default pheromone influence strength
+
     while running:
         clock.tick(FPS)
         screen.fill(GRAY)  # Changed background color to gray
@@ -249,6 +324,8 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:  # Reset simulation
                     reset_simulation(nest, ants, foods, pheromones, initial_ants, ant_speed)
+                elif event.key == pygame.K_SPACE:  # Pause/Play simulation
+                    paused = not paused
                 elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:  # Increase ant speed
                     ant_speed += 0.5
                     for ant in ants:
@@ -257,39 +334,70 @@ def main():
                     ant_speed = max(0.5, ant_speed - 0.5)  # Prevent speed from going below 0.5
                     for ant in ants:
                         ant.speed = ant_speed
-                elif event.key == pygame.K_1:  # Set initial ants to 10
-                    initial_ants = 10
-                    reset_simulation(nest, ants, foods, pheromones, initial_ants, ant_speed)
-                elif event.key == pygame.K_2:  # Set initial ants to 20
-                    initial_ants = 20
-                    reset_simulation(nest, ants, foods, pheromones, initial_ants, ant_speed)
-                elif event.key == pygame.K_3:  # Set initial ants to 30
-                    initial_ants = 30
-                    reset_simulation(nest, ants, foods, pheromones, initial_ants, ant_speed)
+                elif event.key == pygame.K_RETURN and input_active:  # Set initial ants from input
+                    try:
+                        initial_ants = int(input_text)
+                        reset_simulation(nest, ants, foods, pheromones, initial_ants, ant_speed)
+                        input_text = ""  # Clear input box
+                    except ValueError:
+                        pass  # Ignore invalid input
+                elif event.key == pygame.K_BACKSPACE and input_active:  # Backspace in input box
+                    input_text = input_text[:-1]
+                elif event.unicode.isdigit() and input_active:  # Add digit to input box
+                    input_text += event.unicode
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Check if buttons are clicked
+                mouse_pos = pygame.mouse.get_pos()
+                if WIDTH - 170 <= mouse_pos[0] <= WIDTH - 20:
+                    if 20 <= mouse_pos[1] <= 60:  # Reset button
+                        reset_simulation(nest, ants, foods, pheromones, initial_ants, ant_speed)
+                    elif 80 <= mouse_pos[1] <= 120:  # Play/Pause button
+                        paused = not paused
+                    elif 140 <= mouse_pos[1] <= 180:  # Increase speed button
+                        ant_speed += 0.5
+                        for ant in ants:
+                            ant.speed = ant_speed
+                    elif 200 <= mouse_pos[1] <= 240:  # Decrease speed button
+                        ant_speed = max(0.5, ant_speed - 0.5)
+                        for ant in ants:
+                            ant.speed = ant_speed
+                    elif 260 <= mouse_pos[1] <= 300:  # Set ants button
+                        input_active = True
+                    elif 320 <= mouse_pos[1] <= 360:  # Input box
+                        input_active = True
+                    elif 380 <= mouse_pos[1] <= 420:  # Pheromone influence button
+                        show_pheromone_slider = not show_pheromone_slider
+                    elif show_pheromone_slider and 440 <= mouse_pos[1] <= 450:  # Pheromone influence slider
+                        # Update pheromone influence based on mouse position
+                        slider_x = WIDTH - 170
+                        slider_width = 150
+                        mouse_x = mouse_pos[0]
+                        pheromone_influence = max(0, min(1, (mouse_x - slider_x) / slider_width))
 
-        # Update pheromones
-        for pheromone in list(pheromones):
-            if not pheromone.decay():
-                pheromones.remove(pheromone)
+        if not paused:
+            # Update pheromones
+            for pheromone in list(pheromones):
+                if not pheromone.decay():
+                    pheromones.remove(pheromone)
 
-        # Check for depleted food sources and spawn new ones
-        for food in list(foods):
-            if food.amount <= 0:
-                foods.remove(food)
-                foods.append(Food(random.randint(0, WIDTH), random.randint(0, HEIGHT)))  # Spawn new food
+            # Check for depleted food sources and spawn new ones
+            for food in list(foods):
+                if food.amount <= 0:
+                    foods.remove(food)
+                    foods.append(Food(random.randint(0, WIDTH), random.randint(0, HEIGHT)))  # Spawn new food
 
-        for ant in ants:
-            ant.move()
-            food = ant.sense_food(foods)
-            if food and food.amount > 0:
-                ant.collect_food(food)
-            if ant.has_food:
-                ant.deposit_food()
-            ant.sense_pheromones(pheromones)
-            ant.drop_pheromone(pheromones)
+            for ant in ants:
+                ant.move()
+                food = ant.sense_food(foods)
+                if food and food.amount > 0:
+                    ant.collect_food(food)
+                if ant.has_food:
+                    ant.deposit_food()
+                ant.sense_pheromones(pheromones, pheromone_influence)
+                ant.drop_pheromone(pheromones)
 
-        # Spawn new ants if enough food has been deposited
-        nest.spawn_ant(ants, ant_speed)
+            # Spawn new ants if enough food has been deposited
+            nest.spawn_ant(ants, ant_speed)
 
         for food in foods:
             food.draw(screen)
@@ -303,8 +411,13 @@ def main():
         nest.draw(screen)
 
         # Draw counters
-        time_elapsed += 1 / FPS  # Increment time elapsed
-        draw_counters(screen, ants, nest.total_food_collected, nest.total_ants_spawned, int(time_elapsed), ant_speed)
+        if not paused:
+            time_elapsed += 1 / FPS  # Increment time elapsed
+        draw_counters(screen, ants, nest.total_food_collected, nest.total_ants_spawned, int(time_elapsed), ant_speed, pheromone_influence)
+
+        # Draw buttons
+        font = pygame.font.SysFont("Consolas", 24)
+        draw_buttons(screen, font, input_text, paused, show_pheromone_slider, pheromone_influence)
 
         pygame.display.flip()
 
